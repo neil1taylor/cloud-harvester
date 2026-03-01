@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cloud-harvester"
+version = "0.1.0"
+description = "Collect IBM Cloud infrastructure data into XLSX for classic_analyser"
+requires-python = ">=3.11"
+dependencies = [
+    "click>=8.1",
+    "softlayer>=6.1",
+    "ibm-cloud-sdk-core>=3.16",
+    "ibm-vpc>=0.20",
+    "ibm-platform-services>=0.50",
+    "openpyxl>=3.1",
+    "rich>=13.0",
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "ruff>=0.1",
+]
+
+[project.scripts]
+cloud-harvester = "cloud_harvester.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
