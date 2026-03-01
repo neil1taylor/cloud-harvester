@@ -18,7 +18,7 @@ def get_collectors():
     from .transit_gateways import collect_transit_gateways, collect_transit_gateway_connections
     from .direct_links import collect_direct_link_gateways, collect_direct_link_virtual_connections
     from .endpoint_gateways import collect_vpc_endpoint_gateways
-    from .routing_tables import collect_vpc_routing_tables
+    from .routing_tables import collect_vpc_routing_tables, collect_vpc_routes
     from .volumes import collect_vpc_volumes
     from .ssh_keys import collect_vpc_ssh_keys
     from .images import collect_vpc_images
@@ -44,6 +44,7 @@ def get_collectors():
         ("directLinkVirtualConnections", collect_direct_link_virtual_connections),
         ("vpcEndpointGateways", collect_vpc_endpoint_gateways),
         ("vpcRoutingTables", collect_vpc_routing_tables),
+        ("vpcRoutes", collect_vpc_routes),
         ("vpcVolumes", collect_vpc_volumes),
         ("vpcSshKeys", collect_vpc_ssh_keys),
         ("vpcImages", collect_vpc_images),

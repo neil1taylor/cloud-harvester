@@ -2,8 +2,8 @@
 from cloud_harvester.collectors.vpc.client import VpcClient, VPC_REGIONS
 
 
-def collect_vpc_routing_tables(api_key: str, token: str, regions: list[str]) -> list[dict]:
-    """Collect VPC routing tables and routes across all regions."""
+def _collect_routing_data(token: str, regions: list[str]):
+    """Collect routing tables and routes data (shared helper)."""
     client = VpcClient(token)
     target_regions = [r for r in VPC_REGIONS if not regions or any(reg in r for reg in regions)]
 
@@ -82,3 +82,15 @@ def collect_vpc_routing_tables(api_key: str, token: str, regions: list[str]) -> 
                     })
 
     return rt_results, route_results
+
+
+def collect_vpc_routing_tables(api_key: str, token: str, regions: list[str]) -> list[dict]:
+    """Collect VPC routing tables across all regions."""
+    rt_results, _ = _collect_routing_data(token, regions)
+    return rt_results
+
+
+def collect_vpc_routes(api_key: str, token: str, regions: list[str]) -> list[dict]:
+    """Collect VPC routes across all regions."""
+    _, route_results = _collect_routing_data(token, regions)
+    return route_results
