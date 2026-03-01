@@ -7,3 +7,5 @@ build/
 .cloud-harvester-cache/
 *.xlsx
 .ruff_cache/
+.env
+.env.*

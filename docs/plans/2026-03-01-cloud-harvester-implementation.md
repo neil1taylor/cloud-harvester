@@ -75,7 +75,7 @@ __version__ = "0.1.0"
 
 **Step 4: Install in dev mode**
 
-Run: `cd /Users/neiltaylor/Projects/classic_analyser_tools && python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"`
+Run: `cd <project-root> && python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"`
 
 **Step 5: Verify installation**
 

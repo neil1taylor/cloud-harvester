@@ -15,7 +15,7 @@ MOCK_VCENTER_LIST = [
         "domain_type": "primary",
         "nsx_type": "nsx-t",
         "version": "7.0u3",
-        "creator": "admin@ibm.com",
+        "creator": "admin@example.com",
         "crn": "crn:v1:bluemix:public:vmware:dal10:a/abc123::vcenter:vc-001",
     }
 ]
@@ -24,7 +24,7 @@ MOCK_VCENTER_DETAIL = {
     "id": "vc-001",
     "name": "vcenter-dallas",
     "version": "7.0u3",
-    "creator": "admin@ibm.com",
+    "creator": "admin@example.com",
     "crn": "crn:v1:bluemix:public:vmware:dal10:a/abc123::vcenter:vc-001",
     "clusters": [
         {
@@ -82,7 +82,7 @@ def test_collect_vmware_instances():
     assert inst["nsxType"] == "nsx-t"
     assert inst["version"] == "7.0u3"
     assert inst["clusterCount"] == 1
-    assert inst["creator"] == "admin@ibm.com"
+    assert inst["creator"] == "admin@example.com"
     assert inst["crn"] == "crn:v1:bluemix:public:vmware:dal10:a/abc123::vcenter:vc-001"
 
 
