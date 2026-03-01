@@ -8,7 +8,7 @@ OBJECT_MASK = (
 
 
 def _create_sl_client(api_key):
-    return SoftLayer.create_client_from_env(api_key=api_key)
+    return SoftLayer.create_client_from_env(username='apikey', api_key=api_key)
 
 
 def collect_ssh_keys(api_key: str, token: str, regions: list[str]) -> list[dict]:

@@ -9,7 +9,7 @@ OBJECT_MASK = (
 
 
 def _create_sl_client(api_key):
-    return SoftLayer.create_client_from_env(api_key=api_key)
+    return SoftLayer.create_client_from_env(username='apikey', api_key=api_key)
 
 
 def _fetch_domains(api_key):
