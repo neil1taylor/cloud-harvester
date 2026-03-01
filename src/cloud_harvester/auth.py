@@ -40,13 +40,35 @@ def get_account_info(api_key: str) -> dict:
     authenticator = IAMAuthenticator(api_key)
     iam_identity = IamIdentityV1(authenticator=authenticator)
     api_key_details = iam_identity.get_api_keys_details(iam_api_key=api_key).get_result()
-    account_id = api_key_details.get("account_id")
+    account_id = api_key_details.get("account_id", "")
+    api_key_name = api_key_details.get("name", "")
+    iam_id = api_key_details.get("iam_id", "")
 
+    # Try to get account details from the Account Management API
     token = authenticate(api_key)
-    response = requests.get(
-        f"https://accounts.cloud.ibm.com/v1/accounts/{account_id}",
-        headers={"Authorization": f"Bearer {token}"},
-        timeout=30,
-    )
-    response.raise_for_status()
-    return response.json()
+    account_name = account_id
+    owner_email = ""
+    owner = ""
+
+    try:
+        response = requests.get(
+            f"https://accounts.cloud.ibm.com/coe/v2/accounts/{account_id}",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=30,
+        )
+        if response.status_code == 200:
+            acct = response.json()
+            entity = acct.get("entity", {})
+            account_name = entity.get("name", account_id)
+            owner_email = entity.get("owner_email", "")
+            owner_iam_id = entity.get("owner_iam_id", "")
+            owner = entity.get("owner", owner_email)
+    except Exception:
+        pass  # Fall back to API key details
+
+    return {
+        "account_id": account_id,
+        "name": account_name,
+        "owner_email": owner_email,
+        "owner": owner,
+    }
