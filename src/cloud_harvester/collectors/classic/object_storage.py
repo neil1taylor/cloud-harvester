@@ -1,6 +1,5 @@
 """Collect IBM Cloud Classic Object Storage."""
 import SoftLayer
-from cloud_harvester.utils.formatting import safe_string
 
 OBJECT_MASK = (
     "mask[id,username,storageType,capacityGb,bytesUsed,"

@@ -1,6 +1,5 @@
 """Collect VPC VPN Gateway Connections."""
-import requests
-from cloud_harvester.collectors.vpc.client import VpcClient, VPC_REGIONS, VPC_API_VERSION
+from cloud_harvester.collectors.vpc.client import VpcClient, VPC_REGIONS
 
 
 def collect_vpn_gateway_connections(api_key: str, token: str, regions: list[str]) -> list[dict]:

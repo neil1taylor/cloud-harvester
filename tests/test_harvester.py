@@ -1,5 +1,5 @@
 # tests/test_harvester.py
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from cloud_harvester.harvester import run_harvest
 
 

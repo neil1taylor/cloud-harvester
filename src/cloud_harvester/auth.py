@@ -41,8 +41,6 @@ def get_account_info(api_key: str) -> dict:
     iam_identity = IamIdentityV1(authenticator=authenticator)
     api_key_details = iam_identity.get_api_keys_details(iam_api_key=api_key).get_result()
     account_id = api_key_details.get("account_id", "")
-    api_key_name = api_key_details.get("name", "")
-    iam_id = api_key_details.get("iam_id", "")
 
     # Try to get account details from the Account Management API
     token = authenticate(api_key)
@@ -61,7 +59,6 @@ def get_account_info(api_key: str) -> dict:
             entity = acct.get("entity", {})
             account_name = entity.get("name", account_id)
             owner_email = entity.get("owner_email", "")
-            owner_iam_id = entity.get("owner_iam_id", "")
             owner = entity.get("owner", owner_email)
     except Exception:
         pass  # Fall back to API key details

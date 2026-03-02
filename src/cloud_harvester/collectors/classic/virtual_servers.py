@@ -1,6 +1,6 @@
 """Collect IBM Cloud Classic Virtual Servers."""
 import SoftLayer
-from cloud_harvester.utils.formatting import bool_to_yesno, safe_string
+from cloud_harvester.utils.formatting import bool_to_yesno
 
 OBJECT_MASK = (
     "mask[id,hostname,domain,fullyQualifiedDomainName,primaryIpAddress,"

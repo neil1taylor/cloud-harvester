@@ -1,6 +1,5 @@
 """Collect IBM Cloud Classic SSH Keys."""
 import SoftLayer
-from cloud_harvester.utils.formatting import safe_string
 
 OBJECT_MASK = (
     "mask[id,label,fingerprint,createDate,modifyDate,notes]"

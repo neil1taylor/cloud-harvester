@@ -8,7 +8,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskPr
 
 from cloud_harvester.auth import authenticate, get_account_info
 from cloud_harvester.cache import CollectionCache
-from cloud_harvester.schema import CLASSIC_SCHEMAS, VPC_SCHEMAS, POWERVS_SCHEMAS, VMWARE_SCHEMAS, ALL_SCHEMAS
+from cloud_harvester.schema import CLASSIC_SCHEMAS, VPC_SCHEMAS, POWERVS_SCHEMAS, VMWARE_SCHEMAS
 from cloud_harvester.xlsx_writer import write_xlsx
 
 console = Console()

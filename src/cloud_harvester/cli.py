@@ -1,7 +1,5 @@
 """CLI entry point for cloud-harvester."""
-import os
 import sys
-from datetime import datetime, timezone
 
 import click
 from rich.console import Console

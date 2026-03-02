@@ -1,5 +1,4 @@
 """Compute relationships between Classic infrastructure resources."""
-from cloud_harvester.utils.formatting import safe_string
 
 
 def collect_relationships(api_key: str, token: str, regions: list[str], context: dict | None = None) -> list[dict]:

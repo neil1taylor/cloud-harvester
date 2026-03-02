@@ -1,6 +1,5 @@
 """Collect IBM Cloud Classic Dedicated Hosts."""
 import SoftLayer
-from cloud_harvester.utils.formatting import safe_string
 
 OBJECT_MASK = (
     "mask[id,name,createDate,datacenter[name],cpuCount,memoryCapacity,"

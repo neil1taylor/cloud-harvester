@@ -1,6 +1,6 @@
 """Collect IBM Cloud Direct Link Gateways via REST API."""
 import requests
-from cloud_harvester.utils.formatting import bool_to_yesno, safe_string
+from cloud_harvester.utils.formatting import bool_to_yesno
 
 DIRECT_LINK_BASE = "https://directlink.cloud.ibm.com/v1"
 API_VERSION = "2024-06-01"

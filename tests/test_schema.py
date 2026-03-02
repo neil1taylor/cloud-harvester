@@ -1,5 +1,5 @@
 # tests/test_schema.py
-from cloud_harvester.schema import CLASSIC_SCHEMAS, VPC_SCHEMAS, POWERVS_SCHEMAS, VMWARE_SCHEMAS, ColumnDef
+from cloud_harvester.schema import CLASSIC_SCHEMAS, VPC_SCHEMAS, POWERVS_SCHEMAS, VMWARE_SCHEMAS
 
 
 def test_classic_virtual_servers_schema():

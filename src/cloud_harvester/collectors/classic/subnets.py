@@ -1,6 +1,5 @@
 """Collect IBM Cloud Classic Subnets."""
 import SoftLayer
-from cloud_harvester.utils.formatting import safe_string
 
 OBJECT_MASK = (
     "mask[id,networkIdentifier,cidr,subnetType,gateway,broadcastAddress,"

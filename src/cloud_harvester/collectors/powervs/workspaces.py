@@ -1,7 +1,7 @@
 """Discover PowerVS workspaces via IBM Cloud Resource Controller."""
 import requests
 
-from cloud_harvester.collectors.powervs.client import POWERVS_REGIONS, ZONE_TO_REGION
+from cloud_harvester.collectors.powervs.client import ZONE_TO_REGION
 
 RESOURCE_CONTROLLER_URL = "https://resource-controller.cloud.ibm.com/v2/resource_instances"
 POWER_IAAS_RESOURCE_ID = "abd259f0-9990-11e8-acb-aaef098ae67a"

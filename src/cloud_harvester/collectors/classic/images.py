@@ -1,6 +1,5 @@
 """Collect IBM Cloud Classic Images (Block Device Template Groups)."""
 import SoftLayer
-from cloud_harvester.utils.formatting import safe_string
 
 OBJECT_MASK = (
     "mask[id,name,globalIdentifier,note,createDate,status[name],"

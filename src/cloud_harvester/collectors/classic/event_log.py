@@ -1,6 +1,5 @@
 """Collect IBM Cloud Classic Event Log."""
 import SoftLayer
-from cloud_harvester.utils.formatting import safe_string
 
 OBJECT_MASK = (
     "mask[eventName,eventCreateDate,userType,userId,"

@@ -1,6 +1,5 @@
 """Collect IBM Cloud Transit Gateways via REST API."""
 import requests
-from cloud_harvester.utils.formatting import safe_string
 
 TRANSIT_GW_BASE = "https://transit.cloud.ibm.com/v1"
 API_VERSION = "2024-01-01"

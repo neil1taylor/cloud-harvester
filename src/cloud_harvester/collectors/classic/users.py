@@ -1,6 +1,5 @@
 """Collect IBM Cloud Classic Users."""
 import SoftLayer
-from cloud_harvester.utils.formatting import safe_string
 
 OBJECT_MASK = (
     "mask[id,username,email,firstName,lastName,"
