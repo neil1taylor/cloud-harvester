@@ -29,6 +29,9 @@ dev = [
 [project.scripts]
 cloud-harvester = "cloud_harvester.cli:main"
 
+[tool.hatch.build.targets.wheel]
+packages = ["src/cloud_harvester"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
