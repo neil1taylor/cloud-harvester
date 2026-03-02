@@ -11,7 +11,7 @@ one worksheet per resource type.
 ## Installation
 
 ```bash
-pip install cloud-harvester
+pip install ibm-cloud-harvester
 ```
 
 Or from source:
