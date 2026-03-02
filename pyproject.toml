@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "cloud-harvester"
+name = "ibm-cloud-harvester"
 version = "0.1.0"
 description = "Collect IBM Cloud infrastructure data into XLSX for classic_analyser"
 license = "Apache-2.0"
