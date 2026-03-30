@@ -2,6 +2,7 @@
 from unittest.mock import patch, MagicMock
 from cloud_harvester.collectors.classic.virtual_servers import collect_virtual_servers
 from cloud_harvester.collectors.classic.bare_metal import collect_bare_metal
+from cloud_harvester.collectors.classic.block_storage import collect_block_storage
 
 
 def test_collect_virtual_servers():
@@ -183,3 +184,85 @@ def test_collect_bare_metal_vmware_detection():
     assert result[0]["networkVlans"] == "100, 200"
     assert "960" in result[0]["hardDrives"]
     assert "10000Mbps" in result[0]["networkComponents"]
+
+
+def test_collect_block_storage():
+    mock_client = MagicMock()
+    mock_client.__getitem__ = MagicMock(return_value=MagicMock())
+    mock_account = mock_client["SoftLayer_Account"]
+    mock_account.getIscsiNetworkStorage.return_value = [
+        {
+            "id": 721685964,
+            "username": "IBM02SEL1041833-888",
+            "capacityGb": 20,
+            "iops": "100",
+            "storageType": {"keyName": "endurance_block_storage"},
+            "storageTierLevel": "LOW_INTENSITY_TIER",
+            "serviceResourceBackendIpAddress": "198.51.100.42",
+            "lunId": 0,
+            "snapshotCapacityGb": 5,
+            "hasEncryptionAtRest": True,
+            "serviceResource": {"datacenter": {"name": "dal13"}},
+            "parentVolume": {"snapshotSizeBytes": 163840},
+            "replicationStatus": "REPLICATION_PROVISIONING_COMPLETED",
+            "billingItem": {"recurringFee": "10.00"},
+            "createDate": "2025-10-01T00:00:00",
+            "notes": "test volume",
+            "allowedVirtualGuests": [{"id": 123, "hostname": "web01"}],
+            "allowedHardware": [{"id": 456, "hostname": "bm01"}],
+            "allowedSubnets": [
+                {"id": 1, "networkIdentifier": "10.0.0.0", "cidr": 24},
+                {"id": 2, "networkIdentifier": "10.0.1.0", "cidr": 28},
+            ],
+            "replicationPartners": [
+                {
+                    "id": 721870496,
+                    "username": "IBM02SEL1041833_888_REP_1",
+                    "serviceResourceBackendIpAddress": "198.51.100.43",
+                    "serviceResource": {"datacenter": {"name": "dal14"}},
+                    "replicationSchedule": {"type": {"keyname": "REPLICATION_HOURLY"}},
+                },
+            ],
+        }
+    ]
+    mock_account.getNetworkStorage.return_value = []
+
+    with patch("cloud_harvester.collectors.classic.block_storage._create_sl_client", return_value=mock_client):
+        result = collect_block_storage("test-key", "token", [])
+
+    assert len(result) == 1
+    r = result[0]
+    assert r["id"] == 721685964
+    assert r["datacenter"] == "dal13"
+    assert r["encrypted"] is True
+    assert r["allowedSubnets"] == "10.0.0.0/24, 10.0.1.0/28"
+    assert r["snapshotSizeBytes"] == 163840
+    assert r["replicationStatus"] == "REPLICATION_PROVISIONING_COMPLETED"
+    assert "dal14" in r["replicationPartners"]
+    assert "REPLICATION_HOURLY" in r["replicationPartners"]
+
+
+def test_collect_block_storage_missing_new_fields():
+    """New fields default gracefully when absent from API response."""
+    mock_client = MagicMock()
+    mock_client.__getitem__ = MagicMock(return_value=MagicMock())
+    mock_account = mock_client["SoftLayer_Account"]
+    mock_account.getIscsiNetworkStorage.return_value = [
+        {
+            "id": 100,
+            "username": "test-vol",
+            "storageType": {"keyName": "performance_block_storage"},
+        }
+    ]
+    mock_account.getNetworkStorage.return_value = []
+
+    with patch("cloud_harvester.collectors.classic.block_storage._create_sl_client", return_value=mock_client):
+        result = collect_block_storage("test-key", "token", [])
+
+    assert len(result) == 1
+    r = result[0]
+    assert r["datacenter"] == ""
+    assert r["encrypted"] is False
+    assert r["allowedSubnets"] == ""
+    assert r["snapshotSizeBytes"] == 0
+    assert r["replicationStatus"] == ""
