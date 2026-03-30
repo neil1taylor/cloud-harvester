@@ -141,6 +141,7 @@ def test_collect_bare_metal():
             "notes": "",
             "hardDrives": [],
             "networkComponents": [],
+            "allowedNetworkStorage": [],
         }
     ]
 
@@ -157,6 +158,10 @@ def test_collect_bare_metal():
     assert result[0]["recurringFee"] == "500.00"
     assert result[0]["gatewayMember"] == "No"
     assert result[0]["vmwareRole"] == ""
+    assert result[0]["hardDriveDetails"] == ""
+    assert result[0]["attachedBlockStorageGb"] == 0
+    assert result[0]["attachedFileStorageGb"] == 0
+    assert result[0]["volumeCount"] == 0
 
 
 def test_collect_bare_metal_vmware_detection():
@@ -188,6 +193,7 @@ def test_collect_bare_metal_vmware_detection():
                 {"speed": 10000, "status": "ACTIVE"},
                 {"speed": 1000, "status": "ACTIVE"},
             ],
+            "allowedNetworkStorage": [],
         }
     ]
 
@@ -446,6 +452,115 @@ def test_collect_virtual_servers_storage_breakdown():
     assert r["attachedBlockStorageGb"] == 20
     assert r["attachedFileStorageGb"] == 20
     assert r["volumeCount"] == 2
+
+
+def test_collect_bare_metal_storage_enrichment():
+    mock_client = MagicMock()
+    mock_client.__getitem__ = MagicMock(return_value=MagicMock())
+    mock_account = mock_client["SoftLayer_Account"]
+    mock_account.getHardware.return_value = [
+        {
+            "id": 3481996,
+            "hostname": "bm-storage01",
+            "domain": "test.com",
+            "fullyQualifiedDomainName": "bm-storage01.test.com",
+            "manufacturerSerialNumber": "SN789",
+            "primaryIpAddress": "10.0.1.1",
+            "primaryBackendIpAddress": "10.0.1.2",
+            "processorPhysicalCoreAmount": 16,
+            "memoryCapacity": 128,
+            "datacenter": {"name": "dal13"},
+            "operatingSystem": {"softwareDescription": {"name": "RHEL", "version": "9"}},
+            "billingItem": {"recurringFee": "800.00"},
+            "provisionDate": "2025-06-01T00:00:00",
+            "powerSupplyCount": 2,
+            "networkGatewayMemberFlag": False,
+            "networkVlans": [],
+            "tagReferences": [],
+            "notes": "",
+            "hardDrives": [
+                {
+                    "capacity": 480,
+                    "hardwareComponentModel": {
+                        "capacity": "480",
+                        "hardwareGenericComponentModel": {
+                            "hardwareComponentType": {"keyName": "SSD"}
+                        }
+                    }
+                },
+                {
+                    "capacity": 960,
+                    "hardwareComponentModel": {
+                        "capacity": "960",
+                        "hardwareGenericComponentModel": {
+                            "hardwareComponentType": {"keyName": "HDD"}
+                        }
+                    }
+                },
+            ],
+            "networkComponents": [],
+            "allowedNetworkStorage": [
+                {"id": 100, "nasType": "ISCSI", "capacityGb": 500, "username": "block-vol-01"},
+                {"id": 200, "nasType": "ISCSI", "capacityGb": 1000, "username": "block-vol-02"},
+                {"id": 300, "nasType": "NAS", "capacityGb": 250, "username": "file-vol-01"},
+            ],
+        }
+    ]
+
+    with patch("cloud_harvester.collectors.classic.bare_metal._create_sl_client", return_value=mock_client):
+        result = collect_bare_metal("test-key", "token", [])
+
+    assert len(result) == 1
+    r = result[0]
+    assert r["hardDrives"] == "480, 960"
+    assert r["hardDriveDetails"] == "480 GB (SSD), 960 GB (HDD)"
+    assert r["attachedBlockStorageGb"] == 1500
+    assert r["attachedFileStorageGb"] == 250
+    assert r["volumeCount"] == 3
+
+
+def test_collect_bare_metal_no_storage_attachments():
+    """Bare metal with no network storage and drives with missing type info."""
+    mock_client = MagicMock()
+    mock_client.__getitem__ = MagicMock(return_value=MagicMock())
+    mock_account = mock_client["SoftLayer_Account"]
+    mock_account.getHardware.return_value = [
+        {
+            "id": 555,
+            "hostname": "bm-simple",
+            "domain": "test.com",
+            "fullyQualifiedDomainName": "bm-simple.test.com",
+            "manufacturerSerialNumber": "SN000",
+            "primaryIpAddress": "10.0.2.1",
+            "primaryBackendIpAddress": "10.0.2.2",
+            "processorPhysicalCoreAmount": 8,
+            "memoryCapacity": 32,
+            "datacenter": {"name": "wdc04"},
+            "operatingSystem": {},
+            "billingItem": {},
+            "provisionDate": "2025-01-01T00:00:00",
+            "powerSupplyCount": 1,
+            "networkGatewayMemberFlag": False,
+            "networkVlans": [],
+            "tagReferences": [],
+            "notes": "",
+            "hardDrives": [
+                {"capacity": 500},
+            ],
+            "networkComponents": [],
+        }
+    ]
+
+    with patch("cloud_harvester.collectors.classic.bare_metal._create_sl_client", return_value=mock_client):
+        result = collect_bare_metal("test-key", "token", [])
+
+    assert len(result) == 1
+    r = result[0]
+    assert r["hardDrives"] == "500"
+    assert r["hardDriveDetails"] == "500 GB (Unknown)"
+    assert r["attachedBlockStorageGb"] == 0
+    assert r["attachedFileStorageGb"] == 0
+    assert r["volumeCount"] == 0
 
 
 def test_collect_virtual_servers_no_storage_attachments():

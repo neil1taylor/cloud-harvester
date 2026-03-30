@@ -6,11 +6,12 @@ OBJECT_MASK = (
     "mask[id,hostname,domain,fullyQualifiedDomainName,manufacturerSerialNumber,"
     "primaryIpAddress,primaryBackendIpAddress,processorPhysicalCoreAmount,"
     "memoryCapacity,hardDrives[capacity,hardwareComponentModel"
-    "[hardwareGenericComponentModel[hardwareComponentType]]],"
+    "[capacity,hardwareGenericComponentModel[hardwareComponentType[keyName]]]],"
     "datacenter,operatingSystem[softwareDescription],"
     "networkComponents[primaryIpAddress,port,speed,status,macAddress],"
     "billingItem[recurringFee],provisionDate,powerSupplyCount,"
-    "networkGatewayMemberFlag,networkVlans,tagReferences,notes]"
+    "networkGatewayMemberFlag,networkVlans,tagReferences,notes,"
+    "allowedNetworkStorage[id,nasType,capacityGb,username]]"
 )
 
 
@@ -42,12 +43,32 @@ def collect_bare_metal(api_key: str, token: str, regions: list[str]) -> list[dic
         billing = srv.get("billingItem", {})
         recurring_fee = billing.get("recurringFee", "")
 
-        # Format hard drives
+        # Format hard drives (simple list)
         drives = []
+        drive_details = []
         for hd in srv.get("hardDrives", []):
             cap = hd.get("capacity", "")
             drives.append(str(cap))
+            drive_type = (
+                hd.get("hardwareComponentModel", {})
+                .get("hardwareGenericComponentModel", {})
+                .get("hardwareComponentType", {})
+                .get("keyName", "Unknown")
+            ) or "Unknown"
+            drive_details.append(f"{cap} GB ({drive_type})")
         hard_drives = ", ".join(drives)
+        hard_drive_details = ", ".join(drive_details)
+
+        # Attached network storage
+        net_storage = srv.get("allowedNetworkStorage", [])
+        attached_block_gb = sum(
+            s.get("capacityGb", 0) or 0
+            for s in net_storage if s.get("nasType") == "ISCSI"
+        )
+        attached_file_gb = sum(
+            s.get("capacityGb", 0) or 0
+            for s in net_storage if s.get("nasType") == "NAS"
+        )
 
         # Format network components
         net_comps = []
@@ -99,6 +120,10 @@ def collect_bare_metal(api_key: str, token: str, regions: list[str]) -> list[dic
             "vmwareRole": vmware_role,
             "notes": srv.get("notes", "") or "",
             "hardDrives": hard_drives,
+            "hardDriveDetails": hard_drive_details,
+            "attachedBlockStorageGb": attached_block_gb,
+            "attachedFileStorageGb": attached_file_gb,
+            "volumeCount": len(net_storage),
             "networkComponents": network_components,
             "networkVlans": vlans,
             "tags": tags,
