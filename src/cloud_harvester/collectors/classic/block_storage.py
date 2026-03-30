@@ -74,8 +74,10 @@ def collect_block_storage(api_key: str, token: str, regions: list[str]) -> list[
         # Format replication partners (enriched with datacenter and schedule)
         repl_parts = []
         for r in item.get("replicationPartners", []):
-            r_dc = r.get("serviceResource", {}).get("datacenter", {}).get("name", "")
-            r_sched = r.get("replicationSchedule", {}).get("type", {}).get("keyName", "")
+            r_dc = (r.get("serviceResource") or {}).get("datacenter") or {}
+            r_dc = r_dc.get("name", "")
+            r_sched = (r.get("replicationSchedule") or {}).get("type") or {}
+            r_sched = r_sched.get("keyName", "")
             repl_parts.append(
                 f"{r.get('id')}:{r.get('username', '')}:{r_dc}:{r_sched}"
             )
@@ -102,10 +104,10 @@ def collect_block_storage(api_key: str, token: str, regions: list[str]) -> list[
             "storageTierLevel": item.get("storageTierLevel", ""),
             "targetIp": item.get("serviceResourceBackendIpAddress", ""),
             "lunId": item.get("lunId", ""),
-            "datacenter": item.get("serviceResource", {}).get("datacenter", {}).get("name", ""),
+            "datacenter": ((item.get("serviceResource") or {}).get("datacenter") or {}).get("name", ""),
             "encrypted": bool(item.get("hasEncryptionAtRest", False)),
             "snapshotCapacityGb": item.get("snapshotCapacityGb", 0),
-            "snapshotSizeBytes": item.get("parentVolume", {}).get("snapshotSizeBytes", 0) or 0,
+            "snapshotSizeBytes": (item.get("parentVolume") or {}).get("snapshotSizeBytes") or 0,
             "replicationStatus": item.get("replicationStatus", "") or "",
             "recurringFee": billing.get("recurringFee", "") if billing else "",
             "createDate": item.get("createDate", ""),

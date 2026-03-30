@@ -7,7 +7,7 @@ Changes made to cloud-harvester XLSX output that classic_analyser needs to incor
 | Column Header | Field Key | Data Type | Example Value |
 |---|---|---|---|
 | Datacenter | `datacenter` | string | `dal13` |
-| Encrypted | `encrypted` | boolean | `True` / `False` |
+| Encrypted | `encrypted` | boolean | `Yes` / `No` |
 | Snapshot Used (Bytes) | `snapshotSizeBytes` | number | `163840` |
 | Replication Status | `replicationStatus` | string | `REPLICATION_PROVISIONING_COMPLETED` |
 | Allowed Subnets | `allowedSubnets` | string | `10.0.0.0/24, 10.0.1.0/28` |
@@ -23,7 +23,7 @@ Changes made to cloud-harvester XLSX output that classic_analyser needs to incor
 | Column Header | Field Key | Data Type | Example Value |
 |---|---|---|---|
 | Datacenter | `datacenter` | string | `dal13` |
-| Encrypted | `encrypted` | boolean | `True` / `False` |
+| Encrypted | `encrypted` | boolean | `Yes` / `No` |
 | Bytes Used | `bytesUsed` | number | `393216000` |
 | Snapshot Used (Bytes) | `snapshotSizeBytes` | number | `159744` |
 | Replication Status | `replicationStatus` | string | `REPLICATION_PROVISIONING_COMPLETED` |
