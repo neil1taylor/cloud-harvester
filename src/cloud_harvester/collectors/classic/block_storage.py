@@ -13,7 +13,7 @@ OBJECT_MASK = (
     "replicationPartners[id,username,"
     "serviceResourceBackendIpAddress,"
     "serviceResource.datacenter.name,"
-    "replicationSchedule.type.keyname],"
+    "replicationSchedule.type.keyName],"
     "billingItem[recurringFee],createDate,notes]"
 )
 
@@ -75,7 +75,7 @@ def collect_block_storage(api_key: str, token: str, regions: list[str]) -> list[
         repl_parts = []
         for r in item.get("replicationPartners", []):
             r_dc = r.get("serviceResource", {}).get("datacenter", {}).get("name", "")
-            r_sched = r.get("replicationSchedule", {}).get("type", {}).get("keyname", "")
+            r_sched = r.get("replicationSchedule", {}).get("type", {}).get("keyName", "")
             repl_parts.append(
                 f"{r.get('id')}:{r.get('username', '')}:{r_dc}:{r_sched}"
             )

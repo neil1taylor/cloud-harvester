@@ -220,7 +220,7 @@ def test_collect_block_storage():
                     "username": "IBM02SEL1041833_888_REP_1",
                     "serviceResourceBackendIpAddress": "198.51.100.43",
                     "serviceResource": {"datacenter": {"name": "dal14"}},
-                    "replicationSchedule": {"type": {"keyname": "REPLICATION_HOURLY"}},
+                    "replicationSchedule": {"type": {"keyName": "REPLICATION_HOURLY"}},
                 },
             ],
         }
