@@ -89,9 +89,11 @@ cloud-harvester --concurrency 10 --output ./reports
 
 ## Supported Resource Types
 
-82 resource types across four domains.
+82 resource types across four domains. Each resource type produces a worksheet
+in the output XLSX. See the detailed column references linked below for the
+full list of fields collected per resource type.
 
-### Classic (25 types)
+### Classic (25 types) — [Column Reference](docs/classic-resources.md)
 
 | Resource Type | Worksheet |
 |---------------|-----------|
@@ -121,7 +123,7 @@ cloud-harvester --concurrency 10 --output ./reports
 | eventLog | vEventLog |
 | relationships | vRelationships |
 
-### VPC (24 types)
+### VPC (24 types) — [Column Reference](docs/vpc-resources.md)
 
 | Resource Type | Worksheet |
 |---------------|-----------|
@@ -150,7 +152,7 @@ cloud-harvester --concurrency 10 --output ./reports
 | vpcImages | vVpcImages |
 | vpcFlowLogCollectors | vVpcFlowLogs |
 
-### PowerVS (22 types)
+### PowerVS (22 types) — [Column Reference](docs/powervs-resources.md)
 
 | Resource Type | Worksheet |
 |---------------|-----------|
@@ -177,7 +179,7 @@ cloud-harvester --concurrency 10 --output ./reports
 | pvsStockImages | pPvsStockImages |
 | pvsEvents | pPvsEvents |
 
-### VMware (11 types)
+### VMware (11 types) — [Column Reference](docs/vmware-resources.md)
 
 | Resource Type | Worksheet |
 |---------------|-----------|
