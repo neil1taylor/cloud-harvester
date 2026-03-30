@@ -91,5 +91,5 @@ Tests use `unittest.mock` to mock API clients. Classic collectors mock `_create_
 - **Error handling**: API errors (403/429/timeouts) are caught per-collector and return empty lists — partial failures don't block XLSX generation.
 - **Line length**: 120 characters (configured in `pyproject.toml` for ruff).
 - **Python target**: 3.11+ (uses `list[str]` syntax, `|` union types).
-- **Data access**: Safe access with `.get()` and defaults throughout collectors.
+- **Data access**: Safe access with `.get()` and defaults throughout collectors. For nested API objects that may return `null`, use `(obj.get("key") or {}).get(...)` rather than `obj.get("key", {}).get(...)` — the latter only applies the default when the key is absent, not when the value is explicitly `None`.
 - **Cache location**: `.cloud-harvester-cache/<account_id>/` — JSON per resource type with manifest tracking.
