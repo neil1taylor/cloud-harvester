@@ -3,6 +3,7 @@ from unittest.mock import patch, MagicMock
 from cloud_harvester.collectors.classic.virtual_servers import collect_virtual_servers
 from cloud_harvester.collectors.classic.bare_metal import collect_bare_metal
 from cloud_harvester.collectors.classic.block_storage import collect_block_storage
+from cloud_harvester.collectors.classic.file_storage import collect_file_storage
 
 
 def test_collect_virtual_servers():
@@ -263,6 +264,89 @@ def test_collect_block_storage_missing_new_fields():
     r = result[0]
     assert r["datacenter"] == ""
     assert r["encrypted"] is False
+    assert r["allowedSubnets"] == ""
+    assert r["snapshotSizeBytes"] == 0
+    assert r["replicationStatus"] == ""
+
+
+def test_collect_file_storage():
+    mock_client = MagicMock()
+    mock_client.__getitem__ = MagicMock(return_value=MagicMock())
+    mock_account = mock_client["SoftLayer_Account"]
+    mock_account.getNasNetworkStorage.return_value = [
+        {
+            "id": 722595986,
+            "username": "IBM02SEV1041833_1179",
+            "capacityGb": 20,
+            "iops": "",
+            "storageType": {"keyName": "endurance_file_storage"},
+            "storageTierLevel": "LOW_INTENSITY_TIER",
+            "serviceResourceBackendIpAddress": "fsf-dal1301e-fz.adn.networklayer.com",
+            "fileNetworkMountAddress": "fsf-dal1301e-fz.adn.networklayer.com:/IBM02SEV1041833_1179/data01",
+            "bytesUsed": 393216000,
+            "snapshotCapacityGb": 5,
+            "hasEncryptionAtRest": False,
+            "serviceResource": {"datacenter": {"name": "dal13"}},
+            "parentVolume": {"snapshotSizeBytes": 159744},
+            "replicationStatus": "REPLICATION_PROVISIONING_COMPLETED",
+            "billingItem": {"recurringFee": "5.00"},
+            "createDate": "2025-10-21T00:00:00",
+            "notes": "Automation Storage Test",
+            "allowedVirtualGuests": [{"id": 154290696, "hostname": "virtualserver01"}],
+            "allowedHardware": [],
+            "allowedSubnets": [
+                {"id": 10, "networkIdentifier": "10.0.5.0", "cidr": 24},
+            ],
+            "replicationPartners": [
+                {
+                    "id": 722964836,
+                    "username": "IBM02SEV1041833_1179_REP_1",
+                    "serviceResourceBackendIpAddress": "fsf-dal1401a-fz.adn.networklayer.com",
+                    "serviceResource": {"datacenter": {"name": "dal14"}},
+                    "replicationSchedule": {"type": {"keyName": "REPLICATION_HOURLY"}},
+                },
+            ],
+        }
+    ]
+
+    with patch("cloud_harvester.collectors.classic.file_storage._create_sl_client", return_value=mock_client):
+        result = collect_file_storage("test-key", "token", [])
+
+    assert len(result) == 1
+    r = result[0]
+    assert r["id"] == 722595986
+    assert r["datacenter"] == "dal13"
+    assert r["encrypted"] is False
+    assert r["bytesUsed"] == 393216000
+    assert r["allowedSubnets"] == "10.0.5.0/24"
+    assert r["snapshotSizeBytes"] == 159744
+    assert r["replicationStatus"] == "REPLICATION_PROVISIONING_COMPLETED"
+    assert r["mountAddress"] == "fsf-dal1301e-fz.adn.networklayer.com:/IBM02SEV1041833_1179/data01"
+    assert "dal14" in r["replicationPartners"]
+    assert "REPLICATION_HOURLY" in r["replicationPartners"]
+
+
+def test_collect_file_storage_missing_new_fields():
+    """New fields default gracefully when absent from API response."""
+    mock_client = MagicMock()
+    mock_client.__getitem__ = MagicMock(return_value=MagicMock())
+    mock_account = mock_client["SoftLayer_Account"]
+    mock_account.getNasNetworkStorage.return_value = [
+        {
+            "id": 200,
+            "username": "test-file-vol",
+            "storageType": {"keyName": "endurance_file_storage"},
+        }
+    ]
+
+    with patch("cloud_harvester.collectors.classic.file_storage._create_sl_client", return_value=mock_client):
+        result = collect_file_storage("test-key", "token", [])
+
+    assert len(result) == 1
+    r = result[0]
+    assert r["datacenter"] == ""
+    assert r["encrypted"] is False
+    assert r["bytesUsed"] == 0
     assert r["allowedSubnets"] == ""
     assert r["snapshotSizeBytes"] == 0
     assert r["replicationStatus"] == ""

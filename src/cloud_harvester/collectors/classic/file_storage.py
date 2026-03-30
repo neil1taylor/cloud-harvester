@@ -1,12 +1,20 @@
 """Collect IBM Cloud Classic File Storage."""
 import SoftLayer
-from cloud_harvester.utils.formatting import safe_string
 
 OBJECT_MASK = (
     "mask[id,username,capacityGb,iops,storageType,storageTierLevel,"
     "serviceResourceBackendIpAddress,fileNetworkMountAddress,"
+    "bytesUsed,hasEncryptionAtRest,"
+    "serviceResource.datacenter.name,"
+    "parentVolume.snapshotSizeBytes,"
+    "replicationStatus,"
     "allowedVirtualGuests[id,hostname],allowedHardware[id,hostname],"
-    "snapshotCapacityGb,replicationPartners,"
+    "allowedSubnets[id,networkIdentifier,cidr],"
+    "snapshotCapacityGb,"
+    "replicationPartners[id,username,"
+    "serviceResourceBackendIpAddress,"
+    "serviceResource.datacenter.name,"
+    "replicationSchedule.type.keyName],"
     "billingItem[recurringFee],createDate,notes]"
 )
 
@@ -41,12 +49,21 @@ def collect_file_storage(api_key: str, token: str, regions: list[str]) -> list[d
             for h in item.get("allowedHardware", [])
         )
 
-        # Format replication partners
-        repl_list = item.get("replicationPartners", [])
-        if isinstance(repl_list, list):
-            repl_partners = safe_string(repl_list)
-        else:
-            repl_partners = str(repl_list)
+        # Format replication partners (enriched with datacenter and schedule)
+        repl_parts = []
+        for r in item.get("replicationPartners", []):
+            r_dc = r.get("serviceResource", {}).get("datacenter", {}).get("name", "")
+            r_sched = r.get("replicationSchedule", {}).get("type", {}).get("keyName", "")
+            repl_parts.append(
+                f"{r.get('id')}:{r.get('username', '')}:{r_dc}:{r_sched}"
+            )
+        repl_partners = ", ".join(repl_parts)
+
+        # Format allowed subnets
+        allowed_subnets = ", ".join(
+            f"{s.get('networkIdentifier', '')}/{s.get('cidr', '')}"
+            for s in item.get("allowedSubnets", [])
+        )
 
         storage_type = item.get("storageType", {})
         if isinstance(storage_type, dict):
@@ -63,12 +80,18 @@ def collect_file_storage(api_key: str, token: str, regions: list[str]) -> list[d
             "storageTierLevel": item.get("storageTierLevel", ""),
             "targetIp": item.get("serviceResourceBackendIpAddress", ""),
             "mountAddress": item.get("fileNetworkMountAddress", ""),
+            "datacenter": item.get("serviceResource", {}).get("datacenter", {}).get("name", ""),
+            "encrypted": bool(item.get("hasEncryptionAtRest", False)),
+            "bytesUsed": item.get("bytesUsed", 0) or 0,
             "snapshotCapacityGb": item.get("snapshotCapacityGb", 0),
+            "snapshotSizeBytes": item.get("parentVolume", {}).get("snapshotSizeBytes", 0) or 0,
+            "replicationStatus": item.get("replicationStatus", "") or "",
             "recurringFee": billing.get("recurringFee", "") if billing else "",
             "createDate": item.get("createDate", ""),
             "notes": item.get("notes", "") or "",
             "allowedVirtualGuests": allowed_vsis,
             "allowedHardware": allowed_hw,
+            "allowedSubnets": allowed_subnets,
             "replicationPartners": repl_partners,
         })
 
