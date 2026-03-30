@@ -54,6 +54,13 @@ CLASSIC_SCHEMAS: dict[str, ResourceSchema] = {
             ColumnDef("Tags", "tags"),
             ColumnDef("Disk (GB)", "diskGb", "number"),
             ColumnDef("VLANs", "networkVlans"),
+            ColumnDef("Local Storage (GB)", "localStorageGb", "number"),
+            ColumnDef("Portable Storage (GB)", "portableStorageGb", "number"),
+            ColumnDef("Portable Storage Details", "portableStorageDetails"),
+            ColumnDef("Block Device Details", "blockDeviceDetails"),
+            ColumnDef("Attached Block Storage (GB)", "attachedBlockStorageGb", "number"),
+            ColumnDef("Attached File Storage (GB)", "attachedFileStorageGb", "number"),
+            ColumnDef("Volume Count", "volumeCount", "number"),
         ],
     ),
     "bareMetal": ResourceSchema(

@@ -9,7 +9,10 @@ OBJECT_MASK = (
     "createDate,modifyDate,billingItem[recurringFee,hourlyRecurringFee,"
     "children[categoryCode,hourlyRecurringFee],orderItem],"
     "networkVlans[id,vlanNumber,name,networkSpace],"
-    "blockDevices[diskImage[capacity,units]],tagReferences[tag],notes,"
+    "blockDevices[bootableFlag,device,"
+    "diskImage[capacity,units,localDiskFlag,description]],"
+    "allowedNetworkStorage[id,nasType,capacityGb,username],"
+    "tagReferences[tag],notes,"
     "dedicatedAccountHostOnlyFlag,placementGroupId,privateNetworkOnlyFlag,"
     "localDiskFlag]"
 )
@@ -51,10 +54,46 @@ def collect_virtual_servers(api_key: str, token: str, regions: list[str]) -> lis
             recurring_fee = f"{hourly * 730:.2f}"
             cost_basis = "Estimated"
 
-        # Calculate disk
+        # Calculate disk totals and breakdowns
+        block_devices = vsi.get("blockDevices", [])
         disk_gb = sum(
             bd.get("diskImage", {}).get("capacity", 0) or 0
-            for bd in vsi.get("blockDevices", [])
+            for bd in block_devices
+        )
+
+        local_gb = 0
+        portable_gb = 0
+        portable_details = []
+        device_details = []
+        for bd in block_devices:
+            di = bd.get("diskImage", {})
+            cap = di.get("capacity", 0) or 0
+            desc = di.get("description", "") or ""
+            is_local = di.get("localDiskFlag", True)
+            device_num = bd.get("device", "")
+            is_swap = "swap" in desc.lower()
+            is_metadata = "metadata" in desc.lower()
+
+            storage_label = "local" if is_local else "portable"
+            device_details.append(f"{device_num}:{desc}:{cap}:{storage_label}")
+
+            if is_swap or is_metadata:
+                continue
+            if is_local:
+                local_gb += cap
+            else:
+                portable_gb += cap
+                portable_details.append(f"{desc} ({cap} GB)")
+
+        # Attached network storage
+        net_storage = vsi.get("allowedNetworkStorage", [])
+        attached_block_gb = sum(
+            s.get("capacityGb", 0) or 0
+            for s in net_storage if s.get("nasType") == "ISCSI"
+        )
+        attached_file_gb = sum(
+            s.get("capacityGb", 0) or 0
+            for s in net_storage if s.get("nasType") == "NAS"
         )
 
         # Format VLANs
@@ -96,6 +135,13 @@ def collect_virtual_servers(api_key: str, token: str, regions: list[str]) -> lis
             "tags": tags,
             "diskGb": disk_gb,
             "networkVlans": vlans,
+            "localStorageGb": local_gb,
+            "portableStorageGb": portable_gb,
+            "portableStorageDetails": ", ".join(portable_details),
+            "blockDeviceDetails": ", ".join(device_details),
+            "attachedBlockStorageGb": attached_block_gb,
+            "attachedFileStorageGb": attached_file_gb,
+            "volumeCount": len(net_storage),
         })
 
     return results

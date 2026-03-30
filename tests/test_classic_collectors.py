@@ -30,7 +30,14 @@ def test_collect_virtual_servers():
             "modifyDate": "2025-02-01T00:00:00",
             "billingItem": {"recurringFee": "150.00"},
             "networkVlans": [{"vlanNumber": 1234}],
-            "blockDevices": [{"diskImage": {"capacity": 100}}],
+            "blockDevices": [
+                {
+                    "bootableFlag": 1,
+                    "device": "0",
+                    "diskImage": {"capacity": 100, "description": "web01.test.com", "localDiskFlag": True},
+                },
+            ],
+            "allowedNetworkStorage": [],
             "tagReferences": [{"tag": {"name": "web"}}],
             "notes": "test",
             "privateNetworkOnlyFlag": False,
@@ -58,6 +65,11 @@ def test_collect_virtual_servers():
     assert result[0]["privateNetworkOnly"] == "No"
     assert result[0]["localDisk"] == "No"
     assert result[0]["dedicated"] == "No"
+    assert result[0]["localStorageGb"] == 100
+    assert result[0]["portableStorageGb"] == 0
+    assert result[0]["attachedBlockStorageGb"] == 0
+    assert result[0]["attachedFileStorageGb"] == 0
+    assert result[0]["volumeCount"] == 0
 
 
 def test_collect_virtual_servers_region_filter():
@@ -77,6 +89,7 @@ def test_collect_virtual_servers_region_filter():
             "billingItem": {},
             "networkVlans": [],
             "blockDevices": [],
+            "allowedNetworkStorage": [],
             "tagReferences": [],
         },
         {
@@ -91,6 +104,7 @@ def test_collect_virtual_servers_region_filter():
             "billingItem": {},
             "networkVlans": [],
             "blockDevices": [],
+            "allowedNetworkStorage": [],
             "tagReferences": [],
         },
     ]
@@ -350,3 +364,126 @@ def test_collect_file_storage_missing_new_fields():
     assert r["allowedSubnets"] == ""
     assert r["snapshotSizeBytes"] == 0
     assert r["replicationStatus"] == ""
+
+
+def test_collect_virtual_servers_storage_breakdown():
+    mock_client = MagicMock()
+    mock_client.__getitem__ = MagicMock(return_value=MagicMock())
+    mock_account = mock_client["SoftLayer_Account"]
+    mock_account.getVirtualGuests.return_value = [
+        {
+            "id": 154195996,
+            "hostname": "virtualserver01",
+            "domain": "ibmcloud.private",
+            "fullyQualifiedDomainName": "virtualserver01.ibmcloud.private",
+            "primaryIpAddress": "10.0.0.1",
+            "primaryBackendIpAddress": "10.0.0.2",
+            "maxCpu": 2,
+            "maxMemory": 4096,
+            "startCpus": 2,
+            "status": {"keyName": "ACTIVE"},
+            "powerState": {"keyName": "RUNNING"},
+            "datacenter": {"name": "dal13"},
+            "operatingSystem": {"softwareDescription": {"name": "Ubuntu", "version": "24.04"}},
+            "hourlyBillingFlag": False,
+            "createDate": "2025-11-06T00:00:00",
+            "modifyDate": "2025-11-07T00:00:00",
+            "billingItem": {"recurringFee": "50.00"},
+            "networkVlans": [],
+            "tagReferences": [],
+            "notes": "",
+            "privateNetworkOnlyFlag": False,
+            "localDiskFlag": True,
+            "dedicatedAccountHostOnlyFlag": False,
+            "placementGroupId": None,
+            "blockDevices": [
+                {
+                    "bootableFlag": 1,
+                    "device": "0",
+                    "diskImage": {"capacity": 100, "description": "virtualserver01.ibmcloud.private", "localDiskFlag": True},
+                },
+                {
+                    "bootableFlag": 0,
+                    "device": "1",
+                    "diskImage": {"capacity": 2, "description": "154195996-SWAP", "localDiskFlag": True},
+                },
+                {
+                    "bootableFlag": 0,
+                    "device": "2",
+                    "diskImage": {"capacity": 100, "description": "virtualserver01 - Disk 2", "localDiskFlag": True},
+                },
+                {
+                    "bootableFlag": 0,
+                    "device": "4",
+                    "diskImage": {"capacity": 10, "description": "virtualserver01 - Disk 3", "localDiskFlag": False},
+                },
+                {
+                    "bootableFlag": 0,
+                    "device": "7",
+                    "diskImage": {"capacity": 64, "description": "virtualserver01 - Metadata", "localDiskFlag": True},
+                },
+            ],
+            "allowedNetworkStorage": [
+                {"id": 723195182, "nasType": "ISCSI", "capacityGb": 20, "username": "IBM02SEL1041833-909"},
+                {"id": 721245700, "nasType": "NAS", "capacityGb": 20, "username": "IBM02SEV1041833_935"},
+            ],
+        }
+    ]
+
+    with patch("cloud_harvester.collectors.classic.virtual_servers._create_sl_client", return_value=mock_client):
+        result = collect_virtual_servers("test-key", "token", [])
+
+    assert len(result) == 1
+    r = result[0]
+    # Existing field unchanged
+    assert r["diskGb"] == 276  # 100+2+100+10+64 = total of all block devices
+    # New storage breakdown fields
+    assert r["localStorageGb"] == 200  # 100 (boot) + 100 (Disk 2), excludes swap and metadata
+    assert r["portableStorageGb"] == 10  # Disk 3 (localDiskFlag=False)
+    assert "virtualserver01 - Disk 3 (10 GB)" in r["portableStorageDetails"]
+    assert "0:virtualserver01.ibmcloud.private:100:local" in r["blockDeviceDetails"]
+    assert "4:virtualserver01 - Disk 3:10:portable" in r["blockDeviceDetails"]
+    assert r["attachedBlockStorageGb"] == 20
+    assert r["attachedFileStorageGb"] == 20
+    assert r["volumeCount"] == 2
+
+
+def test_collect_virtual_servers_no_storage_attachments():
+    """VSI with no network storage and only local disks."""
+    mock_client = MagicMock()
+    mock_client.__getitem__ = MagicMock(return_value=MagicMock())
+    mock_account = mock_client["SoftLayer_Account"]
+    mock_account.getVirtualGuests.return_value = [
+        {
+            "id": 999,
+            "hostname": "simple-vm",
+            "domain": "test.com",
+            "fullyQualifiedDomainName": "simple-vm.test.com",
+            "datacenter": {"name": "dal13"},
+            "status": {},
+            "powerState": {},
+            "operatingSystem": {},
+            "billingItem": {},
+            "networkVlans": [],
+            "blockDevices": [
+                {
+                    "bootableFlag": 1,
+                    "device": "0",
+                    "diskImage": {"capacity": 25, "description": "simple-vm", "localDiskFlag": True},
+                },
+            ],
+            "tagReferences": [],
+        }
+    ]
+
+    with patch("cloud_harvester.collectors.classic.virtual_servers._create_sl_client", return_value=mock_client):
+        result = collect_virtual_servers("test-key", "token", [])
+
+    assert len(result) == 1
+    r = result[0]
+    assert r["localStorageGb"] == 25
+    assert r["portableStorageGb"] == 0
+    assert r["portableStorageDetails"] == ""
+    assert r["attachedBlockStorageGb"] == 0
+    assert r["attachedFileStorageGb"] == 0
+    assert r["volumeCount"] == 0
